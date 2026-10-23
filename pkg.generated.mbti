@@ -1,0 +1,69 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "allenli178/moon-qrcode"
+
+import {
+  "allenli178/moon-qrcode/content",
+  "allenli178/moon-qrcode/core",
+}
+
+// Values
+pub fn bits_needed(Array[@core.Segment], Int32) -> Int32
+
+pub fn block_count(Int32, @core.EcLevel) -> Int32
+
+pub fn char_count_bits(Int32, @core.Mode) -> Int32
+
+pub fn character_capacity(Int32, @core.EcLevel, @core.Mode) -> Int32
+
+pub fn data_capacity_bits(Int32, @core.EcLevel) -> Int32
+
+pub fn data_codewords(Int32, @core.EcLevel) -> Int32
+
+pub fn ecc_codewords(Int32, @core.EcLevel) -> Int32
+
+pub fn encode(String, ec_level? : @core.EcLevel, min_version? : Int32, max_version? : Int32, mode? : @core.Mode, mask? : @core.Mask) -> @core.QrCode raise @core.QrError
+
+pub fn encode_content(@content.Content, ec_level? : @core.EcLevel) -> @core.QrCode raise @core.QrError
+
+pub fn format_info(@core.EcLevel, @core.Mask) -> Int32
+
+pub fn gf_mul(Byte, Byte) -> Byte
+
+pub fn is_valid_color(String) -> Bool
+
+pub fn rs_encode(ArrayView[Byte], Int32) -> Array[Byte]
+
+pub fn split_segments(String, mode? : @core.Mode) -> Array[@core.Segment] raise @core.QrError
+
+pub fn to_ascii(@core.QrCode, quiet_zone? : Int32, scale? : Int32) -> String
+
+pub fn to_ascii_half(@core.QrCode, quiet_zone? : Int32) -> String
+
+pub fn to_svg(@core.QrCode, quiet_zone? : Int32, module_size? : Int32, dark? : String, light? : String) -> String raise @core.QrError
+
+pub fn total_codewords(Int32) -> Int32
+
+pub fn version_info(Int32) -> Int32?
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @content {type Content}
+
+pub using @core {type EcLevel}
+
+pub using @core {type Mask}
+
+pub using @core {type Mode}
+
+pub using @core {type QrCode}
+
+pub using @core {type QrError}
+
+pub using @core {type Segment}
+
+pub using @core {type Version}
+
+// Traits

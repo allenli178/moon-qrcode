@@ -1,0 +1,8 @@
+import {
+  "allenli178/moon-qrcode" @lib,
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "moonbitlang/x/sys",
+}
+
+pkgtype(kind: "executable")

@@ -19,8 +19,12 @@ repository = ""
 
 license = "Apache-2.0"
 
-keywords = []
+keywords = [ "qrcode", "qr", "encoder", "iso18004", "svg" ]
 
 preferred_target = "wasm"
 
-description = ""
+description = "Pure-MoonBit QR Code Model 2 encoder with ASCII/SVG renderers, payload templates and a flat JS/wasm API | 纯 MoonBit 实现的 QR Code Model 2 编码器，支持 ASCII/SVG 渲染、载荷模板和扁平 JS/wasm API"
+
+import {
+  "moonbitlang/x@0.5.6",
+}

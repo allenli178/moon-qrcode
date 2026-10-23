@@ -1,0 +1,130 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "allenli178/moon-qrcode/core"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn bits_needed(Array[Segment], Int32) -> Int32
+
+pub fn block_count(Int32, EcLevel) -> Int32
+
+pub fn char_count_bits(Int32, Mode) -> Int32
+
+pub fn character_capacity(Int32, EcLevel, Mode) -> Int32
+
+pub fn data_capacity_bits(Int32, EcLevel) -> Int32
+
+pub fn data_codewords(Int32, EcLevel) -> Int32
+
+pub fn ecc_codewords(Int32, EcLevel) -> Int32
+
+pub fn encode(String, ec_level? : EcLevel, min_version? : Int32, max_version? : Int32, mode? : Mode, mask? : Mask) -> QrCode raise QrError
+
+pub fn format_info(EcLevel, Mask) -> Int32
+
+pub fn gf_mul(Byte, Byte) -> Byte
+
+pub fn rs_encode(ArrayView[Byte], Int32) -> Array[Byte]
+
+pub fn split_segments(String, mode? : Mode) -> Array[Segment] raise QrError
+
+pub fn total_codewords(Int32) -> Int32
+
+pub fn version_info(Int32) -> Int32?
+
+// Errors
+pub(all) suberror QrError {
+  EmptyInput
+  DataTooLong(needed~ : Int32, capacity~ : Int32, version~ : Int32, ec_level~ : EcLevel)
+  InvalidVersion(Int32)
+  InvalidCharacter(char~ : Char, mode~ : Mode)
+  InvalidColor(String)
+  Internal(String)
+}
+pub fn QrError::message(Self) -> String
+
+// Types and methods
+pub(all) enum EcLevel {
+  L
+  M
+  Q
+  H
+} derive(Eq, @debug.Debug)
+pub fn EcLevel::equal(Self, Self) -> Bool
+pub fn EcLevel::not_equal(Self, Self) -> Bool
+pub fn EcLevel::output(Self, &Logger) -> Unit
+pub fn EcLevel::to_repr(Self) -> @debug.Repr
+pub fn EcLevel::to_string(Self) -> String
+pub impl Show for EcLevel
+
+pub(all) enum Mask {
+  M0
+  M1
+  M2
+  M3
+  M4
+  M5
+  M6
+  M7
+} derive(Eq, @debug.Debug)
+pub fn Mask::equal(Self, Self) -> Bool
+pub fn Mask::not_equal(Self, Self) -> Bool
+pub fn Mask::output(Self, &Logger) -> Unit
+pub fn Mask::to_repr(Self) -> @debug.Repr
+pub fn Mask::to_string(Self) -> String
+pub impl Show for Mask
+
+pub(all) enum Mode {
+  Numeric
+  Alphanumeric
+  Byte
+} derive(Eq, @debug.Debug)
+pub fn Mode::equal(Self, Self) -> Bool
+pub fn Mode::not_equal(Self, Self) -> Bool
+pub fn Mode::output(Self, &Logger) -> Unit
+pub fn Mode::to_repr(Self) -> @debug.Repr
+pub fn Mode::to_string(Self) -> String
+pub impl Show for Mode
+
+pub struct QrCode {
+  version_ : Version
+  ec_level_ : EcLevel
+  mask_ : Mask
+  size_ : Int32
+  modules_ : Array[Bool]
+}
+pub fn QrCode::ec_level(Self) -> EcLevel
+pub fn QrCode::get(Self, Int32, Int32) -> Bool
+pub fn QrCode::mask(Self) -> Mask
+pub fn QrCode::modules(Self) -> Array[Bool]
+pub fn QrCode::size(Self) -> Int32
+pub fn QrCode::to_bytes(Self) -> Array[Byte]
+pub fn QrCode::version(Self) -> Version
+
+pub struct Segment {
+  mode_ : Mode
+  data_ : String
+}
+pub fn Segment::char_count(Self) -> Int32
+pub fn Segment::data(Self) -> String
+pub fn Segment::data_bits(Self) -> Int32
+pub fn Segment::mode(Self) -> Mode
+pub fn Segment::new(Mode, String) -> Self
+
+pub struct Version(Int32) derive(Eq)
+pub fn Version::char_count_bits(Self, Mode) -> Int32
+pub fn Version::character_capacity(Self, EcLevel, Mode) -> Int32
+pub fn Version::data_capacity_bits(Self, EcLevel) -> Int32
+pub fn Version::data_codewords(Self, EcLevel) -> Int32
+pub fn Version::equal(Self, Self) -> Bool
+pub fn Version::new(Int32) -> Self?
+pub fn Version::not_equal(Self, Self) -> Bool
+pub fn Version::size(Self) -> Int32
+pub fn Version::total_codewords(Self) -> Int32
+pub fn Version::value(Self) -> Int32
+
+// Type aliases
+
+// Traits

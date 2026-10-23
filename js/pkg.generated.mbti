@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "allenli178/moon-qrcode/js"
+
+import {
+  "allenli178/moon-qrcode/core",
+}
+
+// Values
+pub fn encode_flat_buffer(String, Int32, Int32, Int32) -> Bytes raise @core.QrError
+
+pub fn encode_to_modules(String, ec_level? : @core.EcLevel, min_version? : Int32, max_version? : Int32, mask? : @core.Mask) -> FlatQr raise @core.QrError
+
+// Errors
+
+// Types and methods
+pub struct FlatQr {
+  size_ : Int32
+  version_ : Int32
+  ec_level_ : @core.EcLevel
+  mask_ : @core.Mask
+  data_ : Bytes
+}
+pub fn FlatQr::data(Self) -> Bytes
+pub fn FlatQr::ec_level(Self) -> @core.EcLevel
+pub fn FlatQr::mask(Self) -> Int32
+pub fn FlatQr::module_at(Self, Int32, Int32) -> Bool
+pub fn FlatQr::size(Self) -> Int32
+pub fn FlatQr::version(Self) -> Int32
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "allenli178/moon-qrcode/content"
+
+import {
+  "allenli178/moon-qrcode/core",
+}
+
+// Values
+pub fn encode_content(Content, ec_level? : @core.EcLevel) -> @core.QrCode raise @core.QrError
+
+// Errors
+
+// Types and methods
+pub(all) enum Content {
+  Text(String)
+  Url(String)
+  Wifi(ssid~ : String, password~ : String, auth~ : String)
+  Tel(String)
+  Mailto(address~ : String, subject~ : String, body~ : String)
+  Sms(number~ : String, message~ : String)
+  Geo(lat~ : String, lng~ : String)
+  VCard(name~ : String, phone~ : String, email~ : String, org~ : String)
+}
+pub fn Content::geo(String, String) -> Self
+pub fn Content::mailto(String, subject? : String, body? : String) -> Self
+pub fn Content::sms(String, message? : String) -> Self
+pub fn Content::tel(String) -> Self
+pub fn Content::to_text(Self) -> String
+pub fn Content::vcard(String, phone? : String, email? : String, org? : String) -> Self
+pub fn Content::wifi(String, String, auth? : String) -> Self
+
+// Type aliases
+
+// Traits

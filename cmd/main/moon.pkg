@@ -1,5 +1,0 @@
-// import {
-//   "allenli178/moon-qrcode" @lib,
-// }
-
-pkgtype(kind: "executable")

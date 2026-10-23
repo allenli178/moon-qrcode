@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "allenli178/moon-qrcode/render"
+
+import {
+  "allenli178/moon-qrcode/core",
+}
+
+// Values
+pub fn is_valid_color(String) -> Bool
+
+pub fn to_ascii(@core.QrCode, quiet_zone? : Int32, scale? : Int32) -> String
+
+pub fn to_ascii_half(@core.QrCode, quiet_zone? : Int32) -> String
+
+pub fn to_svg(@core.QrCode, quiet_zone? : Int32, module_size? : Int32, dark? : String, light? : String) -> String raise @core.QrError
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

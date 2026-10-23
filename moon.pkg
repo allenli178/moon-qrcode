@@ -1,0 +1,5 @@
+import {
+  "allenli178/moon-qrcode/core",
+  "allenli178/moon-qrcode/content",
+  "allenli178/moon-qrcode/render",
+}

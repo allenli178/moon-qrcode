@@ -1,0 +1,4 @@
+import {
+  "allenli178/moon-qrcode/core",
+  "moonbitlang/core/encoding/utf8",
+}

@@ -1,0 +1,13 @@
+import {
+  "allenli178/moon-qrcode/core",
+}
+
+options(
+  link: {
+    "js": {
+      "exports": [ "encode_to_modules", "encode_flat_buffer" ],
+      "format": "esm",
+    },
+    "wasm-gc": { "exports": [ "encode_flat_buffer" ] },
+  },
+)
