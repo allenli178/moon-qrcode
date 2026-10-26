@@ -1,35 +1,4 @@
 ///|
-fn choose_version(
-  segments : Array[Segment],
-  ec : EcLevel,
-  min_version : Int32,
-  max_version : Int32,
-) -> Int32 raise QrError {
-  if min_version < 1 || min_version > 40 {
-    raise QrError::InvalidVersion(min_version)
-  }
-  if max_version < min_version || max_version > 40 {
-    raise QrError::InvalidVersion(max_version)
-  }
-  let mut chosen = 0
-  for v in min_version..<=max_version {
-    let bits = bits_needed(segments, v)
-    if chosen == 0 && bits <= data_capacity_bits(v, ec) {
-      chosen = v
-    }
-  }
-  if chosen == 0 {
-    raise QrError::DataTooLong(
-      needed=bits_needed(segments, max_version),
-      capacity=data_capacity_bits(max_version, ec),
-      version=max_version,
-      ec_level=ec,
-    )
-  }
-  chosen
-}
-
-///|
 /// Splits data codewords into RS blocks, appends parity, and interleaves both.
 ///
 /// 将数据码字拆分为 RS 块，追加校验字节，并交错排列。
@@ -85,6 +54,30 @@ fn make_qr(version : Int32, ec : EcLevel, mask : Mask, m : Matrix) -> QrCode {
 }
 
 ///|
+fn encode_at_version(
+  segments : Array[Segment],
+  version : Int32,
+  ec : EcLevel,
+  mask? : Mask,
+) -> QrCode raise QrError {
+  let capacity_bytes = data_codewords(version, ec)
+  let buf = BitBuffer::new()
+  for seg in segments {
+    append_segment(buf, seg, version)
+  }
+  buf.pad_to(capacity_bytes)
+  let codewords = interleave_blocks(buf.to_bytes(), version, ec)
+  let base = build_matrix(version, codewords)
+  match mask {
+    Some(m) => make_qr(version, ec, m, apply_mask(base, m, ec))
+    None => {
+      let (best, best_mask) = choose_best_mask(base, ec)
+      make_qr(version, ec, best_mask, best)
+    }
+  }
+}
+
+///|
 /// Encodes `text` as a QR Model 2 symbol.
 ///
 /// 将 `text` 编码为 QR Model 2 符号。
@@ -111,24 +104,97 @@ pub fn encode(
   mode? : Mode,
   mask? : Mask,
 ) -> QrCode raise QrError {
-  let segments = match mode {
-    Some(m) => split_segments(text, mode=m)
-    None => split_segments(text)
+  if text.is_empty() {
+    raise QrError::EmptyInput
   }
-  let version = choose_version(segments, ec_level, min_version, max_version)
-  let capacity_bytes = data_codewords(version, ec_level)
-  let buf = BitBuffer::new()
-  for seg in segments {
-    append_segment(buf, seg, version)
-  }
-  buf.pad_to(capacity_bytes)
-  let codewords = interleave_blocks(buf.to_bytes(), version, ec_level)
-  let base = build_matrix(version, codewords)
-  match mask {
-    Some(m) => make_qr(version, ec_level, m, apply_mask(base, m, ec_level))
+  match mode {
+    Some(m) => {
+      let segments = split_segments(text, mode=m)
+      let version = choose_version(segments, ec_level, min_version, max_version)
+      encode_at_version(segments, version, ec_level, mask?)
+    }
     None => {
-      let (best, best_mask) = choose_best_mask(base, ec_level)
-      make_qr(version, ec_level, best_mask, best)
+      let (version, segments) = choose_version_optimal(
+        text, ec_level, min_version, max_version,
+      )
+      encode_at_version(segments, version, ec_level, mask?)
     }
   }
+}
+
+///|
+/// Encodes arbitrary bytes as one Byte segment. Unlike `encode`, no UTF-8
+/// interpretation is applied, so binary payloads are preserved exactly.
+///
+/// 将任意字节编码为单个 Byte 段。与 `encode` 不同，这里不做 UTF-8 解释，
+/// 因此二进制载荷会被精确保留。
+///
+/// # Example
+/// ```mbt check
+/// test "encode raw bytes" {
+///   let qr = @core.encode_bytes(b"\xff\x00\x80")
+///   assert_eq(qr.version().value(), 1)
+/// }
+/// ```
+pub fn encode_bytes(
+  data : Bytes,
+  ec_level~ : EcLevel = EcLevel::M,
+  min_version~ : Int32 = 1,
+  max_version~ : Int32 = 40,
+  mask? : Mask,
+) -> QrCode raise QrError {
+  if data.is_empty() {
+    raise QrError::EmptyInput
+  }
+  encode_segments(
+    [Segment::from_bytes(data)],
+    ec_level~,
+    min_version~,
+    max_version~,
+    mask?,
+  )
+}
+
+///|
+/// Encodes an explicit sequence of segments, preserving the caller's mode and
+/// ordering choices. Empty segments are dropped. Numeric and alphanumeric
+/// segments are validated against their repertoires.
+///
+/// 编码显式给出的段序列，保留调用方的模式与顺序选择。空段会被丢弃；
+/// 数字与字母数字段会按其字符集校验。
+///
+/// # Example
+/// ```mbt check
+/// test "encode custom segments" {
+///   let segments = [
+///     @core.Segment::new(@core.Mode::Numeric, "123"),
+///     @core.Segment::new(@core.Mode::Byte, "abc"),
+///   ]
+///   let qr = @core.encode_segments(segments)
+///   assert_eq(qr.version().value(), 1)
+/// }
+/// ```
+pub fn encode_segments(
+  segments : Array[Segment],
+  ec_level~ : EcLevel = EcLevel::M,
+  min_version~ : Int32 = 1,
+  max_version~ : Int32 = 40,
+  mask? : Mask,
+) -> QrCode raise QrError {
+  let normalized : Array[Segment] = []
+  for seg in segments {
+    if seg.char_count() > 0 {
+      match seg.mode_ {
+        Numeric => validate(seg.data_, Numeric)
+        Alphanumeric => validate(seg.data_, Alphanumeric)
+        Byte => ()
+      }
+      normalized.push(seg)
+    }
+  }
+  if normalized.length() == 0 {
+    raise QrError::EmptyInput
+  }
+  let version = choose_version(normalized, ec_level, min_version, max_version)
+  encode_at_version(normalized, version, ec_level, mask?)
 }

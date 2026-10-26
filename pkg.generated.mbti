@@ -23,7 +23,11 @@ pub fn ecc_codewords(Int32, @core.EcLevel) -> Int32
 
 pub fn encode(String, ec_level? : @core.EcLevel, min_version? : Int32, max_version? : Int32, mode? : @core.Mode, mask? : @core.Mask) -> @core.QrCode raise @core.QrError
 
+pub fn encode_bytes(Bytes, ec_level? : @core.EcLevel, min_version? : Int32, max_version? : Int32, mask? : @core.Mask) -> @core.QrCode raise @core.QrError
+
 pub fn encode_content(@content.Content, ec_level? : @core.EcLevel) -> @core.QrCode raise @core.QrError
+
+pub fn encode_segments(Array[@core.Segment], ec_level? : @core.EcLevel, min_version? : Int32, max_version? : Int32, mask? : @core.Mask) -> @core.QrCode raise @core.QrError
 
 pub fn format_info(@core.EcLevel, @core.Mask) -> Int32
 

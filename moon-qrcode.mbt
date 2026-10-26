@@ -12,6 +12,8 @@ pub using @core {
   type Segment,
   type Version,
   encode,
+  encode_bytes,
+  encode_segments,
   split_segments,
   bits_needed,
   character_capacity,

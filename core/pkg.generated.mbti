@@ -22,6 +22,10 @@ pub fn ecc_codewords(Int32, EcLevel) -> Int32
 
 pub fn encode(String, ec_level? : EcLevel, min_version? : Int32, max_version? : Int32, mode? : Mode, mask? : Mask) -> QrCode raise QrError
 
+pub fn encode_bytes(Bytes, ec_level? : EcLevel, min_version? : Int32, max_version? : Int32, mask? : Mask) -> QrCode raise QrError
+
+pub fn encode_segments(Array[Segment], ec_level? : EcLevel, min_version? : Int32, max_version? : Int32, mask? : Mask) -> QrCode raise QrError
+
 pub fn format_info(EcLevel, Mask) -> Int32
 
 pub fn gf_mul(Byte, Byte) -> Byte
@@ -106,10 +110,13 @@ pub fn QrCode::version(Self) -> Version
 pub struct Segment {
   mode_ : Mode
   data_ : String
+  raw_ : Bytes?
 }
+pub fn Segment::bytes(Self) -> Bytes
 pub fn Segment::char_count(Self) -> Int32
 pub fn Segment::data(Self) -> String
 pub fn Segment::data_bits(Self) -> Int32
+pub fn Segment::from_bytes(Bytes) -> Self
 pub fn Segment::mode(Self) -> Mode
 pub fn Segment::new(Mode, String) -> Self
 
