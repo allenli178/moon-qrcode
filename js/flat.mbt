@@ -36,6 +36,41 @@ pub fn encode_to_modules(
   mask? : @core.Mask,
 ) -> FlatQr raise @core.QrError {
   let qr = @core.encode(text, ec_level~, min_version~, max_version~, mask?)
+  flat_of(qr)
+}
+
+///|
+/// Encodes arbitrary bytes as one Byte segment and flattens the matrix.
+///
+/// 将任意字节编码为单个 Byte 段并扁平化矩阵。
+///
+/// # Example
+/// ```mbt check
+/// test "flat encode bytes" {
+///   let qr = @js.encode_bytes_to_modules(b"\xff\x00")
+///   assert_eq(qr.size(), 21)
+///   assert_eq(qr.data().length(), 441)
+/// }
+/// ```
+pub fn encode_bytes_to_modules(
+  data : Bytes,
+  ec_level~ : @core.EcLevel = @core.EcLevel::M,
+  min_version~ : Int32 = 1,
+  max_version~ : Int32 = 40,
+  mask? : @core.Mask,
+) -> FlatQr raise @core.QrError {
+  let qr = @core.encode_bytes(
+    data,
+    ec_level~,
+    min_version~,
+    max_version~,
+    mask?,
+  )
+  flat_of(qr)
+}
+
+///|
+fn flat_of(qr : @core.QrCode) -> FlatQr {
   {
     size_: qr.size(),
     version_: qr.version().value(),
@@ -131,12 +166,58 @@ pub fn encode_flat_buffer(
   ec_level : Int32,
   min_version : Int32,
   max_version : Int32,
+  mask? : @core.Mask,
 ) -> Bytes raise @core.QrError {
   let ec = match ec_from_index(ec_level) {
     Some(ec) => ec
     None => raise @core.QrError::Internal("EC level index must be 0..3")
   }
-  let qr = @core.encode(text, ec_level=ec, min_version~, max_version~)
+  let qr = @core.encode(text, ec_level=ec, min_version~, max_version~, mask?)
+  flat_buffer_of(qr)
+}
+
+///|
+/// Byte-input variant of `encode_flat_buffer` for binary payloads.
+///
+/// `encode_flat_buffer` 的字节输入版本，用于二进制载荷。
+///
+/// # Example
+/// ```mbt check
+/// test "flat buffer ABI for raw bytes" {
+///   let buf = @js.encode_bytes_flat_buffer(
+///     b"\xff\x00",
+///     0,
+///     1,
+///     1,
+///     mask=@core.Mask::M0,
+///   )
+///   assert_eq((buf[0].to_int() << 8) | buf[1].to_int(), 21)
+///   assert_eq(buf[3].to_int(), 0)
+/// }
+/// ```
+pub fn encode_bytes_flat_buffer(
+  data : Bytes,
+  ec_level : Int32,
+  min_version : Int32,
+  max_version : Int32,
+  mask? : @core.Mask,
+) -> Bytes raise @core.QrError {
+  let ec = match ec_from_index(ec_level) {
+    Some(ec) => ec
+    None => raise @core.QrError::Internal("EC level index must be 0..3")
+  }
+  let qr = @core.encode_bytes(
+    data,
+    ec_level=ec,
+    min_version~,
+    max_version~,
+    mask?,
+  )
+  flat_buffer_of(qr)
+}
+
+///|
+fn flat_buffer_of(qr : @core.QrCode) -> Bytes {
   let bytes : Array[Byte] = [
     (qr.size() >> 8).to_byte(),
     (qr.size() & 0xFF).to_byte(),
@@ -156,4 +237,12 @@ pub fn encode_flat_buffer(
     bytes.push(bit)
   }
   Bytes::from_array(bytes)
+}
+
+///|
+/// Formats an error returned by the flat API as a human-readable message.
+///
+/// 将扁平 API 返回的错误格式化为可读信息。
+pub fn flat_error_message(error : @core.QrError) -> String {
+  error.message()
 }

@@ -6,9 +6,15 @@ import {
 }
 
 // Values
-pub fn encode_flat_buffer(String, Int32, Int32, Int32) -> Bytes raise @core.QrError
+pub fn encode_bytes_flat_buffer(Bytes, Int32, Int32, Int32, mask? : @core.Mask) -> Bytes raise @core.QrError
+
+pub fn encode_bytes_to_modules(Bytes, ec_level? : @core.EcLevel, min_version? : Int32, max_version? : Int32, mask? : @core.Mask) -> FlatQr raise @core.QrError
+
+pub fn encode_flat_buffer(String, Int32, Int32, Int32, mask? : @core.Mask) -> Bytes raise @core.QrError
 
 pub fn encode_to_modules(String, ec_level? : @core.EcLevel, min_version? : Int32, max_version? : Int32, mask? : @core.Mask) -> FlatQr raise @core.QrError
+
+pub fn flat_error_message(@core.QrError) -> String
 
 // Errors
 

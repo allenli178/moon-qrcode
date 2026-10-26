@@ -5,5 +5,8 @@ target
 .mooncakes/
 .moonagent/
 tools/zxing/node_modules/
+npm/dist/
+npm/node_modules/
+npm/*.tgz
 trace.json
 coverage.xml

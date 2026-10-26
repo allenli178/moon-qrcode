@@ -5,9 +5,17 @@ import {
 options(
   link: {
     "js": {
-      "exports": [ "encode_to_modules", "encode_flat_buffer" ],
+      "exports": [
+        "encode_to_modules",
+        "encode_bytes_to_modules",
+        "encode_flat_buffer",
+        "encode_bytes_flat_buffer",
+        "flat_error_message",
+      ],
       "format": "esm",
     },
-    "wasm-gc": { "exports": [ "encode_flat_buffer" ] },
+    "wasm-gc": {
+      "exports": [ "encode_flat_buffer", "encode_bytes_flat_buffer" ],
+    },
   },
 )

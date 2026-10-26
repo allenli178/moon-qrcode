@@ -1,0 +1,47 @@
+{
+  "name": "@allenli178/moon-qrcode",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pure-MoonBit QR Code Model 2 encoder exposed as an ESM package",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "dist/",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/build.mjs && node --test test/*.test.mjs && tsc -p test/tsconfig.json",
+    "pack:check": "node scripts/build.mjs && node scripts/check-pack.mjs",
+    "prepack": "node scripts/build.mjs"
+  },
+  "keywords": [
+    "qrcode",
+    "qr",
+    "moonbit",
+    "esm",
+    "encoder"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/allenli178/moon-qrcode.git",
+    "directory": "npm"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
