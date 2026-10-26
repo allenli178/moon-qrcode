@@ -9,31 +9,27 @@ on:
 permissions:
   contents: read
 
-env:
-  MOONBIT_VERSION: "0.1.20261020"
-
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   test:
-    name: Format, check and test
-    runs-on: ubuntu-latest
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v5
-      - name: Set up MoonBit
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "$MOONBIT_VERSION"
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Show toolchain
-        run: |
-          moon version --all
-          moon update
+      - uses: ./.github/actions/setup-moonbit
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Check formatting
+        if: runner.os == 'Linux'
         run: moon fmt --check
       - name: Type check all backends
         run: moon check --target all
@@ -46,21 +42,22 @@ jobs:
       - name: Test native
         run: moon test --target native
       - name: Verify generated interfaces are current
+        if: runner.os == 'Linux'
         run: |
           moon info
           test -z "$(git status --porcelain -- '*.mbti')"
+      - name: Build native CLI
+        run: moon build cmd/moonqr --target native --release
+      - name: CLI smoke tests
+        run: python3 tools/cli/smoke.py
 
   size:
     name: Artifact size budget
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-      - name: Set up MoonBit
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "$MOONBIT_VERSION"
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Resolve dependencies
-        run: moon update
+      - uses: ./.github/actions/setup-moonbit
       - name: Build release artifacts
         run: |
           moon build js --target wasm-gc --release
@@ -85,14 +82,10 @@ jobs:
   zxing:
     name: ZXing decode
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-      - name: Set up MoonBit
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "$MOONBIT_VERSION"
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Resolve dependencies
-        run: moon update
+      - uses: ./.github/actions/setup-moonbit
       - name: Build CLI
         run: moon build cmd/moonqr --target native --release
       - uses: actions/setup-node@v4
@@ -108,15 +101,72 @@ jobs:
   coverage:
     name: Coverage report
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-      - name: Set up MoonBit
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "$MOONBIT_VERSION"
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Resolve dependencies
-        run: moon update
+      - uses: ./.github/actions/setup-moonbit
       - name: Run coverage
         run: moon coverage analyze -- -f cobertura -o coverage.xml
       - name: Enforce core coverage
         run: python3 tools/check_coverage.py coverage.xml
+
+  npm:
+    name: npm wrapper
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-moonbit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: npm/package-lock.json
+      - name: Install dependencies
+        run: npm ci --prefix npm
+      - name: Smoke tests and type check
+        run: npm test --prefix npm
+      - name: Validate package contents
+        run: npm run pack:check --prefix npm
+
+  fuzz:
+    name: Reference cross-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-moonbit
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install reference encoder
+        run: pip install -r tools/fuzz/requirements.txt
+      - name: Build CLI
+        run: moon build cmd/moonqr --target native --release
+      - name: Compare matrices with Python qrcode
+        run: python3 tools/fuzz/verify.py
+
+  bench:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-moonbit
+      - name: Run native benchmark suite
+        run: moon bench benchmarks --target native --release
+
+  prove:
+    name: Formal contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-moonbit
+      - name: Install SMT solver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y z3
+          z3 --version
+      - name: Prove capacity contracts
+        run: moon prove core/capacity_model

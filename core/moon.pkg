@@ -1,3 +1,4 @@
 import {
+  "allenli178/moon-qrcode/core/capacity_model" @model,
   "moonbitlang/core/encoding/utf8",
 }

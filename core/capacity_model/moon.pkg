@@ -1,0 +1,5 @@
+///|
+/// Capacity arithmetic shared by the encoder and checked by `moon prove`.
+///
+/// 编码器使用的容量计算，并由 `moon prove` 进行形式化验证。
+proof_enabled = true

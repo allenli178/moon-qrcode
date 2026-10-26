@@ -1,0 +1,29 @@
+name: Set up MoonBit
+description: Install the pinned MoonBit toolchain and cache the package registry
+
+inputs:
+  version:
+    description: MoonBit toolchain version
+    required: false
+    default: "0.1.20261023"
+
+runs:
+  using: composite
+  steps:
+    - name: Cache MoonBit registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.moon/registry
+        key: moonbit-${{ runner.os }}-${{ inputs.version }}-${{ hashFiles('moon.mod') }}
+        restore-keys: |
+          moonbit-${{ runner.os }}-${{ inputs.version }}-
+    - name: Install toolchain
+      shell: bash
+      run: |
+        curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "${{ inputs.version }}"
+        echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+    - name: Show toolchain and resolve dependencies
+      shell: bash
+      run: |
+        moon version --all
+        moon update

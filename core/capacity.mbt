@@ -69,15 +69,7 @@ fn ec_index(ec : EcLevel) -> Int32 {
 /// 可用于码字的数据 + ECC 模块数除以 8。
 /// 源自 ISO Table 1；不计余留位。
 pub fn total_codewords(version : Int32) -> Int32 {
-  let mut result = (16 * version + 128) * version + 64
-  if version >= 2 {
-    let num_align = version / 7 + 2
-    result = result - ((25 * num_align - 10) * num_align - 55)
-    if version >= 7 {
-      result = result - 36
-    }
-  }
-  result / 8
+  @model.total_codewords(version)
 }
 
 ///|
@@ -103,54 +95,15 @@ pub fn data_capacity_bits(version : Int32, ec : EcLevel) -> Int32 {
 
 ///|
 pub fn char_count_bits(version : Int32, mode : Mode) -> Int32 {
+  @model.char_count_bits(version, char_mode(mode))
+}
+
+///|
+fn char_mode(mode : Mode) -> @model.CharMode {
   match mode {
-    Numeric => if version <= 9 { 10 } else if version <= 26 { 12 } else { 14 }
-    Alphanumeric =>
-      if version <= 9 {
-        9
-      } else if version <= 26 {
-        11
-      } else {
-        13
-      }
-    Byte => if version <= 9 { 8 } else { 16 }
-  }
-}
-
-///|
-fn numeric_capacity(bits : Int32) -> Int32 {
-  if bits <= 0 {
-    0
-  } else {
-    bits / 10 * 3 +
-    ({
-      let rem = bits % 10
-      if rem >= 7 {
-        2
-      } else if rem >= 4 {
-        1
-      } else {
-        0
-      }
-    })
-  }
-}
-
-///|
-fn alphanumeric_capacity(bits : Int32) -> Int32 {
-  if bits <= 0 {
-    0
-  } else {
-    bits / 11 * 2 + (if bits % 11 >= 6 { 1 } else { 0 })
-  }
-}
-
-///|
-fn byte_capacity(bits : Int32) -> Int32 {
-  if bits <= 0 {
-    0
-  } else {
-    bits / 8
+    Numeric => @model.CharMode::Numeric
+    Alphanumeric => @model.CharMode::Alphanumeric
+    Byte => @model.CharMode::Byte
   }
 }
 
@@ -163,9 +116,9 @@ pub fn character_capacity(version : Int32, ec : EcLevel, mode : Mode) -> Int32 {
     4 -
     char_count_bits(version, mode)
   match mode {
-    Numeric => numeric_capacity(payload)
-    Alphanumeric => alphanumeric_capacity(payload)
-    Byte => byte_capacity(payload)
+    Numeric => @model.numeric_capacity(payload)
+    Alphanumeric => @model.alphanumeric_capacity(payload)
+    Byte => @model.byte_capacity(payload)
   }
 }
 

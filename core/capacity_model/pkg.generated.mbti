@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "allenli178/moon-qrcode/core/capacity_model"
+
+// Values
+pub fn alphanumeric_capacity(Int32) -> Int32
+
+pub fn byte_capacity(Int32) -> Int32
+
+pub fn char_count_bits(Int32, CharMode) -> Int32
+
+pub fn numeric_capacity(Int32) -> Int32
+
+pub fn total_codewords(Int32) -> Int32
+
+// Errors
+
+// Types and methods
+pub(all) enum CharMode {
+  Numeric
+  Alphanumeric
+  Byte
+}
+
+// Type aliases
+
+// Traits
