@@ -1,8 +1,17 @@
 import {
   "allenli178/moon-qrcode" @lib,
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
   "moonbitlang/x/sys",
 }
+
+options(
+  "native-stub": [ "stdin.c" ],
+  targets: {
+    "stdin_native.mbt": [ "native", "llvm" ],
+    "stdin_wasm.mbt": [ "js", "wasm", "wasm-gc" ],
+  },
+)
 
 pkgtype(kind: "executable")

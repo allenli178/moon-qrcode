@@ -15,7 +15,7 @@ fn CliError::message(self : CliError) -> String {
 ///
 /// 打印诊断信息并以非零状态码退出。
 fn[T] die(message : String) -> T {
-  println("moonqr: \{message}")
+  eprintln("moonqr: \{message}")
   @sys.exit(1)
   abort("unreachable")
 }
@@ -109,7 +109,7 @@ fn take_value(
 ///|
 fn print_help() -> Unit {
   println(
-    "moonqr - MoonBit QR Code 生成器 / QR Code Generator\n\n用法 / USAGE:\n  moonqr <载荷/payload> [选项/options]\n\n选项 / OPTIONS:\n  -l, --level <L|M|Q|H>      纠错等级 / error correction level (default M)\n  -v, --version <1..40>      指定版本 / force an explicit version\n      --min-version <n>      最小候选版本 / smallest version considered\n      --max-version <n>      最大候选版本 / largest version considered\n  -m, --mode <name>          numeric | alphanumeric | byte (default auto)\n      --mask <0..7>          指定掩码 / force a mask pattern\n  -q, -qz, --quiet-zone <n>  静默区宽度 / quiet zone width in modules (default 4)\n  -s, --scale <n>            ASCII 缩放倍数 / ASCII scale factor (default 1)\n      --module-size <n>      SVG 模块像素大小 / SVG module size in pixels (default 4)\n  -f, --format <name>        ascii | half | svg (default: by output extension)\n  -o, --output <path>        输出到文件 / write to a file instead of stdout\n      --svg                  格式快捷方式 / shorthand for --format svg\n      --half                 格式快捷方式 / shorthand for --format half\n      --dark <css-color>     SVG 前景色 / SVG foreground color (default #000000)\n      --light <css-color>    SVG 背景色 / SVG background color (default #ffffff)\n  -h, --help                 显示帮助 / show this help\n      --cli-version          显示版本 / show the CLI version\n\n示例 / EXAMPLES:\n  moonqr \"HELLO WORLD\" -l H -o hello.svg\n  moonqr \"https://moonbitlang.com\" --format half\n  moonqr \"你好世界\" -l M -o hello.svg\n  moonqr \"0123456789\" -v 2 -m numeric -s 2",
+    "moonqr - MoonBit QR Code 生成器 / QR Code Generator\n\n用法 / USAGE:\n  moonqr <载荷/payload> [选项/options]\n  moonqr - [选项/options] < 文件\n  moonqr [选项/options] -- <载荷/payload>\n\n选项 / OPTIONS:\n  -l, --level <L|M|Q|H>      纠错等级 / error correction level (default M)\n  -v, --version <1..40>      指定版本 / force an explicit version\n      --min-version <n>      最小候选版本 / smallest version considered\n      --max-version <n>      最大候选版本 / largest version considered\n  -m, --mode <name>          numeric | alphanumeric | byte (default auto)\n      --mask <0..7>          指定掩码 / force a mask pattern\n  -q, -qz, --quiet-zone <n>  静默区宽度 / quiet zone width in modules (default 4)\n  -s, --scale <n>            ASCII 缩放倍数 / ASCII scale factor (default 1)\n      --module-size <n>      SVG 模块像素大小 / SVG module size in pixels (default 4)\n  -f, --format <name>        ascii | half | svg | json (default: by output extension)\n      --json                 JSON 元数据与模块矩阵 / JSON metadata and module rows\n  -o, --output <path>        输出到文件 / write to a file instead of stdout\n      --svg                  格式快捷方式 / shorthand for --format svg\n      --half                 格式快捷方式 / shorthand for --format half\n      --dark <css-color>     SVG 前景色 / SVG foreground color (default #000000)\n      --light <css-color>    SVG 背景色 / SVG background color (default #ffffff)\n  -h, --help                 显示帮助 / show this help\n  -V, --cli-version          显示版本 / show the CLI version\n\n将载荷写成 - 时从标准输入读取，末尾换行会被去除。\nUse - as the payload to read from stdin; trailing newlines are stripped.\n使用 -- 可编码以 - 开头的载荷。\nUse -- before a payload that starts with -.\n\n示例 / EXAMPLES:\n  moonqr \"HELLO WORLD\" -l H -o hello.svg\n  moonqr \"https://moonbitlang.com\" --format half\n  moonqr \"你好世界\" -l M -o hello.svg\n  moonqr \"0123456789\" -v 2 -m numeric -s 2\n  echo -n \"HELLO\" | moonqr - -l H --svg\n  cat payload.txt | moonqr - -o code.svg\n  moonqr --json \"HELLO\" | jq .version\n  moonqr -- --payload-starting-with-dash",
   )
 }
 
@@ -129,9 +129,15 @@ fn parse_args(argv : Array[String]) -> Options raise CliError {
   let mut dark = "#000000"
   let mut light = "#ffffff"
   let mut i = 1
+  let mut options_done = false
   while i < argv.length() {
     let arg = argv[i]
-    if !arg.has_prefix("-") {
+    if !options_done && arg == "--" {
+      options_done = true
+      i = i + 1
+      continue
+    }
+    if options_done || arg == "-" || !arg.has_prefix("-") {
       match payload {
         None => payload = Some(arg)
         Some(_) => raise CliError::Usage("unexpected extra argument '\{arg}'")
@@ -145,10 +151,14 @@ fn parse_args(argv : Array[String]) -> Options raise CliError {
         @sys.exit(0)
         abort("unreachable")
       }
-      "--cli-version" => {
+      "-V" | "--cli-version" => {
         println("moonqr 0.1.0")
         @sys.exit(0)
         abort("unreachable")
+      }
+      "--json" => {
+        format = "json"
+        i = i + 1
       }
       "--svg" => {
         format = "svg"
@@ -208,10 +218,10 @@ fn parse_args(argv : Array[String]) -> Options raise CliError {
       "-f" | "--format" => {
         let (value, next) = take_value(argv, i, arg)
         match value {
-          "ascii" | "half" | "svg" => format = value
+          "ascii" | "half" | "svg" | "json" => format = value
           _ =>
             raise CliError::Usage(
-              "invalid format '\{value}'; expected ascii, half or svg",
+              "invalid format '\{value}'; expected ascii, half, svg or json",
             )
         }
         i = next
@@ -235,6 +245,7 @@ fn parse_args(argv : Array[String]) -> Options raise CliError {
     }
   }
   let payload = match payload {
+    Some("-") => read_stdin_text()
     Some(text) => text
     None => raise CliError::Usage("missing payload (try --help)")
   }
@@ -301,6 +312,8 @@ fn inferred_format(options : Options) -> String {
       let lower = path.to_lower()
       if lower.has_suffix(".txt") {
         "ascii"
+      } else if lower.has_suffix(".json") {
+        "json"
       } else {
         "svg"
       }
@@ -310,9 +323,47 @@ fn inferred_format(options : Options) -> String {
 }
 
 ///|
+fn mask_number(mask : @lib.Mask) -> Int32 {
+  match mask {
+    @lib.Mask::M0 => 0
+    @lib.Mask::M1 => 1
+    @lib.Mask::M2 => 2
+    @lib.Mask::M3 => 3
+    @lib.Mask::M4 => 4
+    @lib.Mask::M5 => 5
+    @lib.Mask::M6 => 6
+    @lib.Mask::M7 => 7
+  }
+}
+
+///|
+/// JSON metadata plus row-major module rows (`1` dark, `0` light), without
+/// the quiet zone.
+///
+/// JSON 元数据与行优先模块行（`1` 深色，`0` 浅色），不含静默区。
+fn render_json(qr : @lib.QrCode) -> String {
+  let sb = StringBuilder()
+  sb <+
+    "{\"version\":\{qr.version().value()},\"ecLevel\":\"\{qr.ec_level()}\",\"mask\":\{mask_number(qr.mask())},\"size\":\{qr.size()},\"modules\":["
+  for y in 0..<qr.size() {
+    if y > 0 {
+      sb <+ ","
+    }
+    sb <+ "\""
+    for x in 0..<qr.size() {
+      sb.write_string(if qr.get(y, x) { "1" } else { "0" })
+    }
+    sb <+ "\""
+  }
+  sb <+ "]}"
+  sb.to_string()
+}
+
+///|
 fn render(qr : @lib.QrCode, options : Options) -> String {
   let format = inferred_format(options)
   match format {
+    "json" => render_json(qr)
     "svg" =>
       try
         @lib.to_svg(
