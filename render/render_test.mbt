@@ -64,7 +64,7 @@ test "half-height rendering packs two module rows per line" {
 }
 
 ///|
-test "SVG contains the expected frame and one rect per dark module" {
+test "SVG contains the expected frame and merged dark runs" {
   let qr = @core.encode(
     "hi",
     min_version=1,
@@ -79,13 +79,37 @@ test "SVG contains the expected frame and one rect per dark module" {
   assert_true(svg.contains("shape-rendering=\"crispEdges\""))
   assert_true(svg.contains("<g fill=\"#000000\">"))
   assert_true(svg.contains("fill=\"#ffffff\""))
-  let mut dark = 0
-  for b in qr.to_bytes() {
-    dark = dark + b.to_int()
+  // The top-left finder row is one seven-module run after the quiet zone.
+  assert_true(svg.contains("<path d=\"M4 4h7v1h-7"))
+  assert_false(svg.contains("<rect x="))
+  assert_eq(svg.split("<path").to_array().length(), 2)
+}
+
+///|
+test "SVG emits one subpath per horizontal dark run" {
+  let qr = @core.encode(
+    "hi",
+    min_version=1,
+    max_version=1,
+    mode=@core.Mode::Byte,
+  )
+  let svg = @render.to_svg(qr, quiet_zone=4, module_size=4)
+  let mut runs = 0
+  for y in 0..<qr.size() {
+    let mut x = 0
+    while x < qr.size() {
+      if qr.get(y, x) {
+        runs = runs + 1
+        while x < qr.size() && qr.get(y, x) {
+          x = x + 1
+        }
+      } else {
+        x = x + 1
+      }
+    }
   }
-  // One background rect, one rect per dark module, plus the empty segment
-  // before the first match.
-  assert_eq(svg.split("<rect").to_array().length(), dark + 2)
+  // Every run contributes exactly one `v1h-` tail.
+  assert_eq(svg.split("v1h-").to_array().length(), runs + 1)
 }
 
 ///|
@@ -107,7 +131,7 @@ test "SVG supports zero quiet zone and custom colors" {
   assert_true(svg.contains("width=\"21\""))
   assert_true(svg.contains("<g fill=\"navy\">"))
   assert_true(svg.contains("fill=\"rgb(255, 255, 255)\""))
-  assert_true(svg.contains("<rect x=\"0\" y=\"0\" width=\"1\" height=\"1\"/>"))
+  assert_true(svg.contains("<path d=\"M0 0h7v1h-7"))
 }
 
 ///|

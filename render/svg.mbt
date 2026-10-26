@@ -36,11 +36,12 @@ fn contains_url_reference(color : String) -> Bool {
 }
 
 ///|
-/// Renders the symbol as an SVG document. Modules are emitted as `<rect>`
-/// elements inside a `<g>` with the requested foreground color.
+/// Renders the symbol as an SVG document. Consecutive dark modules in each
+/// row are merged into horizontal runs inside a single `<path>`, which keeps
+/// high-version output small.
 ///
-/// 将 QR 码渲染为 SVG 文档。模块以 `<rect>` 元素形式输出，
-/// 使用指定的前景色包裹在 `<g>` 中。
+/// 将 QR 码渲染为 SVG 文档。每行连续的深色模块合并为水平行程，
+/// 统一写入一个 `<path>`，以控制高版本码的输出体积。
 pub fn to_svg(
   qr : @core.QrCode,
   quiet_zone~ : Int32 = 4,
@@ -65,14 +66,22 @@ pub fn to_svg(
     "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 \{full} \{full}\" width=\"\{pixels}\" height=\"\{pixels}\" shape-rendering=\"crispEdges\">\n"
   sb <+ "<rect width=\"\{full}\" height=\"\{full}\" fill=\"\{light}\"/>\n"
   sb <+ "<g fill=\"\{dark}\">\n"
+  sb <+ "<path d=\""
   for y in 0..<size {
-    for x in 0..<size {
+    let mut x = 0
+    while x < size {
       if qr.get(y, x) {
-        sb <+
-          "<rect x=\"\{x + qz}\" y=\"\{y + qz}\" width=\"1\" height=\"1\"/>\n"
+        let start = x
+        while x < size && qr.get(y, x) {
+          x = x + 1
+        }
+        let run = x - start
+        sb <+ "M\{start + qz} \{y + qz}h\{run}v1h-\{run}"
+      } else {
+        x = x + 1
       }
     }
   }
-  sb <+ "</g>\n</svg>\n"
+  sb <+ "\"/>\n</g>\n</svg>\n"
   sb.to_string()
 }

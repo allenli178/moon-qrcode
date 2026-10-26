@@ -65,21 +65,88 @@ class GraySource extends LuminanceSource {
 function svgToLuminance(svg, scale) {
   const viewBox = svg.match(/viewBox="0 0 (\d+) (\d+)"/);
   if (!viewBox) throw new Error("viewBox not found in SVG");
+  const path = svg.match(/<path[^>]*\bd="([^"]+)"/);
+  if (!path) throw new Error("dark-module path not found in SVG");
   const modules = Number(viewBox[1]);
   const pixels = modules * scale;
   const luminances = new Uint8ClampedArray(pixels * pixels).fill(255);
-  const darkRect = /<rect x="(\d+)" y="(\d+)" width="1" height="1"\/>/g;
+  const tokens = path[1].match(/[MHhVvZz]|-?\d+/g) ?? [];
+  let i = 0;
+  let x = 0;
+  let y = 0;
   let dark = 0;
-  let rect;
-  while ((rect = darkRect.exec(svg)) !== null) {
-    const x = Number(rect[1]);
-    const y = Number(rect[2]);
-    dark++;
-    for (let dy = 0; dy < scale; dy++) {
-      const start = (y * scale + dy) * pixels + x * scale;
-      luminances.fill(0, start, start + scale);
+  let minX = 0;
+  let maxX = 0;
+  let minY = 0;
+  let maxY = 0;
+  let open = false;
+  const point = () => {
+    if (!open) {
+      minX = maxX = x;
+      minY = maxY = y;
+      open = true;
+      return;
+    }
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  };
+  // Each subpath is one module-high rectangle; filling its bounding box
+  // reproduces the module rows without special-casing the closing edges.
+  const flush = () => {
+    if (!open) return;
+    const left = minX * scale;
+    const right = maxX * scale;
+    const top = minY * scale;
+    const bottom = maxY * scale;
+    dark += (maxX - minX) * (maxY - minY);
+    for (let py = top; py < bottom; py++) {
+      const start = py * pixels + left;
+      luminances.fill(0, start, start + (right - left));
+    }
+    open = false;
+  };
+  while (i < tokens.length) {
+    const command = tokens[i++];
+    switch (command) {
+      case "M":
+        flush();
+        x = Number(tokens[i++]);
+        y = Number(tokens[i++]);
+        point();
+        break;
+      case "m":
+        flush();
+        x += Number(tokens[i++]);
+        y += Number(tokens[i++]);
+        point();
+        break;
+      case "h":
+        x += Number(tokens[i++]);
+        point();
+        break;
+      case "H":
+        x = Number(tokens[i++]);
+        point();
+        break;
+      case "v":
+        y += Number(tokens[i++]);
+        point();
+        break;
+      case "V":
+        y = Number(tokens[i++]);
+        point();
+        break;
+      case "z":
+      case "Z":
+        flush();
+        break;
+      default:
+        throw new Error(`unsupported SVG path command: ${command}`);
     }
   }
+  flush();
   if (dark === 0) throw new Error("SVG contains no dark modules");
   return { luminances, width: pixels, height: pixels };
 }
