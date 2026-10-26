@@ -4,3 +4,6 @@ target/
 target
 .mooncakes/
 .moonagent/
+tools/zxing/node_modules/
+trace.json
+coverage.xml

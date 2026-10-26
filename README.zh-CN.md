@@ -1,9 +1,11 @@
 # MoonQR
 
+[![CI](https://github.com/allenli178/moon-qrcode/actions/workflows/ci.yml/badge.svg)](https://github.com/allenli178/moon-qrcode/actions/workflows/ci.yml)
+
 [English](./README.md) | 中文
 
-纯 MoonBit 实现、零依赖的 QR Code **编码器**，遵循 ISO/IEC 18004 Model 2
-标准。输出模块矩阵；渲染、载荷模板和 CLI 是在其之上的薄层。
+纯 MoonBit 实现的 QR Code **编码器**，核心库零依赖，遵循 ISO/IEC 18004
+Model 2 标准。输出模块矩阵；渲染、载荷模板和 CLI 是在其之上的薄层。
 
 - 版本 1–40，纠错等级 L / M / Q / H
 - 数字、字母数字和 UTF-8 字节段，支持贪心自动分段
@@ -176,10 +178,16 @@ if (result.$tag === 1) {
 ## 正确性与测试
 
 ```bash
-moon test                 # wasm-gc
+moon test --target wasm-gc
+moon test --target wasm
 moon test --target js
 moon test --target native
-moon fmt && moon info
+moon fmt --check && moon info
+
+# ZXing 解码校验（Node 18+）
+moon build cmd/moonqr --target native --release
+npm ci --prefix tools/zxing
+node tools/zxing/verify.js
 ```
 
 - 71 个测试，覆盖 `core`、`render`、`content`、`js` 和根包门面。
@@ -188,13 +196,15 @@ moon fmt && moon info
   8 个数字向量（共 112 个），加上完整矩阵快照。
 - GF(2<sup>8</sup>)、BCH 整除性/已知值、RS 校验向量、容量
   核算、段分割、错误路径和 SVG/ASCII 输出均有覆盖。
-- 同一套测试在 wasm-gc、JS 和 native 目标上通过，三个后端输出
+- 同一套测试在 wasm、wasm-gc、JS 和 native 目标上通过，四个后端输出
   比特一致。
 - 核心覆盖率超过 90%（`moon coverage analyze`）；未覆盖行
   为防御性不变量检查和不可达枚举分支。
+- 12 个生成符号（覆盖全部纠错等级、UTF-8、强制掩码/版本、长载荷和
+  模板载荷）均可被 ZXing 参考实现正确解码，该校验在 CI 中运行。
 
-编码器尚未在 CI 中通过真机摄像头或 ZXing 解码器验证；矩阵级
-交叉比对是当前的正确性保障。
+真机摄像头（iOS/Android/微信）验证仍为手动；CI 以 ZXing 解码和
+矩阵级交叉比对作为自动保障。
 
 ## 范围
 
@@ -203,7 +213,7 @@ moon fmt && moon info
 
 有意排除：解码、PNG/JPEG/PDF 导出、Logo/样式、Micro QR、
 汉字模式、ECI 和结构化追加。形式化 `moon prove` 契约、
-基准测试套件、ZXing CI 回放和 npm 包装器在路线图中；
+基准测试套件、真机自动化验证和 npm 包装器在路线图中；
 当前以性质测试替代证明。
 
 ## 项目结构
@@ -214,6 +224,7 @@ render/    ASCII 和 SVG 渲染器
 content/   载荷模板
 js/        扁平 Uint8Array ABI + ESM/wasm-gc 链接导出
 cmd/moonqr CLI 命令行工具
+tools/zxing ZXing 解码验证工具（Node）
 ```
 
 `core`、`render`、`content` 和 `js` 仅依赖 MoonBit 标准库。

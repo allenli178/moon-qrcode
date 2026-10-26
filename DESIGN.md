@@ -114,7 +114,7 @@ return value gives JS hosts a `Uint8Array` without manual lifetimes.
 
 ## Verification
 
-- 71 tests run on wasm-gc, JS and native.
+- 71 tests run on wasm, wasm-gc, JS and native.
 - 72 byte-mode, 32 alphanumeric and 8 numeric matrix digests (112 total) are
   pinned from the Python `qrcode` reference; selected matrices are compared
   module-by-module.
@@ -123,6 +123,9 @@ return value gives JS hosts a `Uint8Array` without manual lifetimes.
 - Capacity monotonicity, EC ordering, block accounting, exact-capacity
   boundaries and error paths are asserted.
 - Core coverage is above 90%.
+- `tools/zxing/verify.js` decodes twelve generated symbols with the ZXing
+  reference implementation; CI runs the decode check alongside the test suite,
+  size budgets and coverage.
 
 ## Deviations from `dev.md`
 
@@ -134,5 +137,5 @@ return value gives JS hosts a `Uint8Array` without manual lifetimes.
 | manual wasm pointer ABI | flat `Bytes`/`Uint8Array` ABI with GC-managed lifetime |
 | npm-ready JS entry | generated ESM + `.d.ts`; npm packaging is roadmap |
 | zero dependencies | library packages are stdlib-only; the CLI depends on `moonbitlang/x` for fs/sys |
-| ZXing CI playback | matrix cross-checks against a reference encoder; decoder CI is roadmap |
+| ZXing CI playback | `tools/zxing/verify.js` decodes generated symbols in CI; physical-camera checks remain manual |
 | benchmark suite (NFR-4) | not yet added; artifact sizes were measured manually |

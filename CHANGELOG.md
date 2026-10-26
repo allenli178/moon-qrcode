@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 — 2026-10-22
+## 0.1.0 — 2026-10-26
 
 Initial release.
 
@@ -18,4 +18,8 @@ Initial release.
 - Flat `Uint8Array` ABI with ESM and wasm-gc link exports.
 - Native CLI (`cmd/moonqr`) with version/EC/mode/mask/format options.
 - 71 tests, with matrices cross-checked against the Python `qrcode`
-  reference and identical results on wasm-gc, JS and native.
+  reference and identical results on wasm, wasm-gc, JS and native.
+- ZXing decode verification harness (`tools/zxing`) covering all EC levels,
+  UTF-8, forced masks/versions and long payloads.
+- GitHub Actions CI for formatting, all-backend checks and tests, artifact
+  size budgets, coverage and ZXing decoding.

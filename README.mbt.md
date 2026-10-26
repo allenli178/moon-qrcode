@@ -1,10 +1,12 @@
 # MoonQR
 
+[![CI](https://github.com/allenli178/moon-qrcode/actions/workflows/ci.yml/badge.svg)](https://github.com/allenli178/moon-qrcode/actions/workflows/ci.yml)
+
 English | [中文](./README.zh-CN.md)
 
-A pure-MoonBit, dependency-free QR Code **encoder** for ISO/IEC 18004 Model 2
-symbols. It produces the finished module matrix; rendering, payload templates
-and a CLI are included as thin layers on top.
+A pure-MoonBit QR Code **encoder** for ISO/IEC 18004 Model 2 symbols. The
+encoder produces the finished module matrix; its core, renderers and payload
+templates are dependency-free, and a thin CLI is included on top.
 
 - Versions 1–40, error-correction levels L / M / Q / H
 - Numeric, alphanumeric and UTF-8 byte segments with greedy auto-splitting
@@ -180,10 +182,16 @@ Measured artifact sizes (release, this repository):
 ## Correctness and testing
 
 ```bash
-moon test                 # wasm-gc
+moon test --target wasm-gc
+moon test --target wasm
 moon test --target js
 moon test --target native
-moon fmt && moon info
+moon fmt --check && moon info
+
+# ZXing decode check (Node 18+)
+moon build cmd/moonqr --target native --release
+npm ci --prefix tools/zxing
+node tools/zxing/verify.js
 ```
 
 - 71 tests across `core`, `render`, `content`, `js` and the root facade.
@@ -192,13 +200,16 @@ moon fmt && moon info
   8 numeric vectors (112 total), plus full-matrix snapshots.
 - GF(2<sup>8</sup>), BCH divisibility/known values, RS parity vectors, capacity
   accounting, segment splitting, error paths and SVG/ASCII output are covered.
-- The same test suite passes on wasm-gc, JS and native targets, so output is
-  bit-identical across the three backends.
+- The same test suite passes on wasm, wasm-gc, JS and native targets, so
+  output is bit-identical across the four backends.
 - Core coverage is above 90% (`moon coverage analyze`); remaining uncovered
   lines are defensive invariant checks and unreachable enum arms.
+- Twelve generated symbols (all EC levels, UTF-8, forced masks and versions,
+  long payloads, payload templates) decode correctly with the ZXing reference
+  implementation; the check runs in CI.
 
-The encoder has not yet been validated with a physical camera or the ZXing
-decoder in CI; matrix-level cross-checking is the current correctness gate.
+Physical-camera tests on iOS/Android/WeChat are still manual; ZXing decoding
+and matrix-level cross-checking are the automated gates.
 
 ## Scope
 
@@ -207,8 +218,8 @@ auto-segmentation, masks, renderers, templates, CLI, flat JS/wasm ABI.
 
 Deliberately excluded: decoding, PNG/JPEG/PDF export, logos/styling, Micro QR,
 Kanji mode, ECI and Structured Append. Formal `moon prove` contracts, a
-benchmark suite, ZXing playback in CI and a published npm wrapper are roadmap
-items; property tests stand in for proofs today.
+benchmark suite, physical-camera automation and a published npm wrapper are
+roadmap items; property tests stand in for proofs today.
 
 ## Project layout
 
@@ -218,6 +229,7 @@ render/    ASCII and SVG renderers
 content/   payload templates
 js/        flat Uint8Array ABI + ESM/wasm-gc link exports
 cmd/moonqr CLI
+tools/zxing ZXing decode verification harness (Node)
 ```
 
 `core`, `render`, `content` and `js` use only the MoonBit standard library.

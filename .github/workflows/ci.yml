@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  MOONBIT_VERSION: "0.1.20261020"
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Format, check and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "$MOONBIT_VERSION"
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Show toolchain
+        run: |
+          moon version --all
+          moon update
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check formatting
+        run: moon fmt --check
+      - name: Type check all backends
+        run: moon check --target all
+      - name: Test wasm-gc
+        run: moon test --target wasm-gc
+      - name: Test wasm
+        run: moon test --target wasm
+      - name: Test JS
+        run: moon test --target js
+      - name: Test native
+        run: moon test --target native
+      - name: Verify generated interfaces are current
+        run: |
+          moon info
+          test -z "$(git status --porcelain -- '*.mbti')"
+
+  size:
+    name: Artifact size budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "$MOONBIT_VERSION"
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Resolve dependencies
+        run: moon update
+      - name: Build release artifacts
+        run: |
+          moon build js --target wasm-gc --release
+          moon build js --target js --release
+          moon build cmd/moonqr --target native --release
+      - name: Enforce size budgets
+        run: |
+          set -euo pipefail
+          wasm_raw=$(stat -c%s _build/wasm-gc/release/build/js/js.wasm)
+          wasm_gz=$(gzip -c _build/wasm-gc/release/build/js/js.wasm | wc -c)
+          js_raw=$(stat -c%s _build/js/release/build/js/js.js)
+          js_gz=$(gzip -c _build/js/release/build/js/js.js | wc -c)
+          cli=$(find _build/native/release/build/cmd/moonqr -maxdepth 1 -type f \( -name moonqr -o -name moonqr.exe \) | head -n 1)
+          cli_size=$(stat -c%s "$cli")
+          echo "wasm-gc: ${wasm_raw} B raw / ${wasm_gz} B gzip (limit 20 KiB gzip)"
+          echo "JS:      ${js_raw} B raw / ${js_gz} B gzip (limit 30 KiB gzip)"
+          echo "CLI:     ${cli_size} B (limit 2 MiB)"
+          test "$wasm_gz" -le $((20 * 1024))
+          test "$js_gz" -le $((30 * 1024))
+          test "$cli_size" -le $((2 * 1024 * 1024))
+
+  zxing:
+    name: ZXing decode
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "$MOONBIT_VERSION"
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Resolve dependencies
+        run: moon update
+      - name: Build CLI
+        run: moon build cmd/moonqr --target native --release
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/zxing/package-lock.json
+      - name: Install decoder
+        run: npm ci --prefix tools/zxing
+      - name: Decode generated symbols
+        run: node tools/zxing/verify.js
+
+  coverage:
+    name: Coverage report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "$MOONBIT_VERSION"
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Resolve dependencies
+        run: moon update
+      - name: Run coverage
+        run: moon coverage analyze -- -f cobertura -o coverage.xml
+      - name: Enforce core coverage
+        run: python3 tools/check_coverage.py coverage.xml
