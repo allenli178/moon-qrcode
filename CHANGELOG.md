@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.2.0 — 2026-10-26
+
+Capability release: complete payload input, compact SVG, a fuller CLI and JS
+distribution, and machine-checked capacity contracts.
+
+### Added
+
+- `encode_bytes` for arbitrary binary payloads; `Segment::from_bytes` keeps
+  non-UTF-8 bytes exactly.
+- `encode_segments` for caller-composed segment lists.
+- Optimal dynamic-programming segmentation for auto mode (six states across
+  version groups), with exhaustive optimality tests; forced modes keep the
+  greedy split.
+- `-f json` / `--json` CLI output, stdin payloads (`-`), a `--` option
+  terminator, the `-V` version alias and stderr diagnostics.
+- `tools/cli/smoke.py` with 17 CLI behavior checks.
+- Typed ESM/npm wrapper (`npm/`) with `encode`, `encodeBytes`, `encodeToBytes`,
+  `QrCodeError`, TypeScript declarations, Node tests and pack validation.
+- Flat JS ABI additions: `encode_bytes_to_modules`,
+  `encode_bytes_flat_buffer`, optional forced masks and `flat_error_message`.
+- Seven native benchmarks (`benchmarks/`) covering versions 1/10/40, auto
+  mixed payloads, SVG and half-height rendering.
+- Proof-enabled `core/capacity_model` with four `moon prove` contracts checked
+  by Z3.
+- `tools/fuzz/verify.py`, a reference cross-check against Python `qrcode` 8.2
+  covering 203 matrices.
+- Multi-OS CI (Ubuntu + macOS) with size, ZXing, coverage, npm, fuzz,
+  benchmark and formal-proof jobs; a shared `setup-moonbit` action caches the
+  package registry.
+
+### Changed
+
+- SVG output now merges horizontal dark runs into a single `<path>` instead of
+  emitting one `<rect>` per module.
+- Capacity helpers delegate to the proved `core/capacity_model` package.
+- CLI diagnostics go to stderr; `--cli-version` gains the `-V` alias.
+- Module and npm wrapper versions bumped to 0.2.0.
+
+### Verification
+
+- 88 unit and README tests on wasm-gc, wasm, JS and native.
+- 112 pinned reference matrix digests.
+- 203 Python `qrcode` cross-check matrices, 12 ZXing decodes, 17 CLI smoke
+  tests, and 10 npm tests plus TypeScript checks.
+- Core coverage 95.5%; release artifacts stay within the CI size budgets.
+
 ## 0.1.0 — 2026-10-26
 
 Initial release.

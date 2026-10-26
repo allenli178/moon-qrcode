@@ -152,7 +152,7 @@ fn parse_args(argv : Array[String]) -> Options raise CliError {
         abort("unreachable")
       }
       "-V" | "--cli-version" => {
-        println("moonqr 0.1.0")
+        println("moonqr 0.2.0")
         @sys.exit(0)
         abort("unreachable")
       }

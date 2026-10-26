@@ -1,6 +1,6 @@
 {
   "name": "@allenli178/moon-qrcode",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Pure-MoonBit QR Code Model 2 encoder exposed as an ESM package",
   "type": "module",

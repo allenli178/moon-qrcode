@@ -11,7 +11,7 @@
 
 name = "allenli178/moon-qrcode"
 
-version = "0.1.0"
+version = "0.2.0"
 
 readme = "README.mbt.md"
 
@@ -23,7 +23,7 @@ keywords = [ "qrcode", "qr", "encoder", "iso18004", "svg" ]
 
 preferred_target = "wasm-gc"
 
-description = "Pure-MoonBit QR Code Model 2 encoder with ASCII/SVG renderers, payload templates and a flat JS/wasm API | 纯 MoonBit 实现的 QR Code Model 2 编码器，支持 ASCII/SVG 渲染、载荷模板和扁平 JS/wasm API"
+description = "Pure-MoonBit QR Code Model 2 encoder with optimal segmentation, ASCII/SVG renderers, payload templates, a native CLI and a typed JS/npm API | 纯 MoonBit 实现的 QR Code Model 2 编码器，支持最优分段、ASCII/SVG 渲染、载荷模板、原生 CLI 和带类型的 JS/npm API"
 
 import {
   "moonbitlang/x@0.5.6",
