@@ -10,9 +10,21 @@ pub fn is_valid_color(String) -> Bool
 
 pub fn to_ascii(@core.QrCode, quiet_zone? : Int32, scale? : Int32) -> String
 
+pub fn to_ascii_color(@core.QrCode, quiet_zone? : Int32, scale? : Int32, dark? : String, light? : String, inverted? : Bool) -> String raise @core.QrError
+
 pub fn to_ascii_half(@core.QrCode, quiet_zone? : Int32) -> String
 
+pub fn to_pbm(@core.QrCode, quiet_zone? : Int32, module_size? : Int32) -> Array[Byte]
+
+pub fn to_png(@core.QrCode, quiet_zone? : Int32, module_size? : Int32) -> Array[Byte]
+
+pub fn to_png_rgba(@core.QrCode, quiet_zone? : Int32, module_size? : Int32, dark? : String, light? : String) -> Array[Byte] raise @core.QrError
+
 pub fn to_svg(@core.QrCode, quiet_zone? : Int32, module_size? : Int32, dark? : String, light? : String) -> String raise @core.QrError
+
+pub fn to_svg_rect(@core.QrCode, quiet_zone? : Int32, module_size? : Int32, dark? : String, light? : String, preserve_aspect_ratio? : String) -> String raise @core.QrError
+
+pub fn to_svg_rounded(@core.QrCode, quiet_zone? : Int32, module_size? : Int32, dark? : String, light? : String, radius? : Int32) -> String raise @core.QrError
 
 // Errors
 

@@ -85,3 +85,99 @@ pub fn to_svg(
   sb <+ "\"/>\n</g>\n</svg>\n"
   sb.to_string()
 }
+
+///|
+/// 用独立 `<rect>` 元素渲染 QR 码。比路径模式输出更大，
+/// 但每个模块可以被单独选中或设置动画。
+/// 可选的 `preserve_aspect_ratio` 覆盖默认 SVG 缩放行为。
+///
+/// 用独立 `<rect>` 元素渲染 QR 码。比路径模式输出更大，
+/// 但每个模块可以被单独选中或设置动画。
+/// 可选的 `preserve_aspect_ratio` 覆盖默认 SVG 缩放行为。
+pub fn to_svg_rect(
+  qr : @core.QrCode,
+  quiet_zone~ : Int32 = 4,
+  module_size~ : Int32 = 4,
+  dark~ : String = "#000000",
+  light~ : String = "#ffffff",
+  preserve_aspect_ratio~ : String = "xMidYMid meet",
+) -> String raise @core.QrError {
+  if !is_valid_color(dark) {
+    raise @core.QrError::InvalidColor(dark)
+  }
+  if !is_valid_color(light) {
+    raise @core.QrError::InvalidColor(light)
+  }
+  let qz = if quiet_zone < 0 { 0 } else { quiet_zone }
+  let ms = if module_size < 1 { 1 } else { module_size }
+  let size = qr.size()
+  let full = size + qz * 2
+  let pixels = full * ms
+  let sb = StringBuilder()
+  sb <+ "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+  sb <+
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 \{full} \{full}\" width=\"\{pixels}\" height=\"\{pixels}\" preserveAspectRatio=\"\{preserve_aspect_ratio}\" shape-rendering=\"crispEdges\">\n"
+  sb <+ "<rect width=\"\{full}\" height=\"\{full}\" fill=\"\{light}\"/>\n"
+  for y in 0..<size {
+    for x in 0..<size {
+      if qr.get(y, x) {
+        sb <+
+          "<rect x=\"\{x + qz}\" y=\"\{y + qz}\" width=\"1\" height=\"1\" fill=\"\{dark}\"/>\n"
+      }
+    }
+  }
+  sb <+ "</svg>\n"
+  sb.to_string()
+}
+
+///|
+/// 圆角 SVG 渲染。每个深色模块渲染为带圆角的 `<rect>`。
+/// `radius` 是圆角半径（模块单位，建议 0.1 ~ 0.4）。
+///
+/// 圆角 SVG 渲染。每个深色模块渲染为带圆角的 `<rect>`。
+/// `radius` 是圆角半径（模块单位，建议 0.1 ~ 0.4）。
+pub fn to_svg_rounded(
+  qr : @core.QrCode,
+  quiet_zone~ : Int32 = 4,
+  module_size~ : Int32 = 4,
+  dark~ : String = "#000000",
+  light~ : String = "#ffffff",
+  radius~ : Int32 = 1,
+) -> String raise @core.QrError {
+  if !is_valid_color(dark) {
+    raise @core.QrError::InvalidColor(dark)
+  }
+  if !is_valid_color(light) {
+    raise @core.QrError::InvalidColor(light)
+  }
+  let qz = if quiet_zone < 0 { 0 } else { quiet_zone }
+  let ms = if module_size < 1 { 1 } else { module_size }
+  let size = qr.size()
+  let full = size + qz * 2
+  let pixels = full * ms
+  let r = if radius < 0 { 0 } else { radius }
+  let sb = StringBuilder()
+  sb <+ "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+  sb <+
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 \{full} \{full}\" width=\"\{pixels}\" height=\"\{pixels}\" shape-rendering=\"geometricPrecision\">\n"
+  sb <+ "<rect width=\"\{full}\" height=\"\{full}\" fill=\"\{light}\"/>\n"
+  sb <+ "<g fill=\"\{dark}\" rx=\"\{r}\" ry=\"\{r}\">\n"
+  for y in 0..<size {
+    let mut x = 0
+    while x < size {
+      if qr.get(y, x) {
+        let start = x
+        while x < size && qr.get(y, x) {
+          x = x + 1
+        }
+        let run = x - start
+        sb <+
+          "<rect x=\"\{start + qz}\" y=\"\{y + qz}\" width=\"\{run}\" height=\"1\"/>\n"
+      } else {
+        x = x + 1
+      }
+    }
+  }
+  sb <+ "</g>\n</svg>\n"
+  sb.to_string()
+}

@@ -30,10 +30,21 @@ pub using @core {
 }
 
 ///|
-/// ASCII and SVG renderers.
+/// ASCII, SVG, PNG and PBM renderers.
 ///
-/// ASCII 和 SVG 渲染器。
-pub using @render {to_ascii, to_ascii_half, to_svg, is_valid_color}
+/// ASCII、SVG、PNG 和 PBM 渲染器。
+pub using @render {
+  to_ascii,
+  to_ascii_half,
+  to_ascii_color,
+  to_svg,
+  to_svg_rect,
+  to_svg_rounded,
+  is_valid_color,
+  to_png,
+  to_png_rgba,
+  to_pbm,
+}
 
 ///|
 /// Payload templates (URL, WiFi, vCard, tel, mailto, SMS, geo).
