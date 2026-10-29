@@ -31,6 +31,7 @@ struct Options {
   quiet_zone : Int32
   scale : Int32
   module_size : Int32
+  radius : Int32
   format : String
   output : String?
   dark : String
@@ -109,7 +110,7 @@ fn take_value(
 ///|
 fn print_help() -> Unit {
   println(
-    "moonqr - MoonBit QR Code 生成器 / QR Code Generator\n\n用法 / USAGE:\n  moonqr <载荷/payload> [选项/options]\n  moonqr - [选项/options] < 文件\n  moonqr [选项/options] -- <载荷/payload>\n\n选项 / OPTIONS:\n  -l, --level <L|M|Q|H>      纠错等级 / error correction level (default M)\n  -v, --version <1..40>      指定版本 / force an explicit version\n      --min-version <n>      最小候选版本 / smallest version considered\n      --max-version <n>      最大候选版本 / largest version considered\n  -m, --mode <name>          numeric | alphanumeric | byte (default auto)\n      --mask <0..7>          指定掩码 / force a mask pattern\n  -q, -qz, --quiet-zone <n>  静默区宽度 / quiet zone width in modules (default 4)\n  -s, --scale <n>            ASCII 缩放倍数 / ASCII scale factor (default 1)\n      --module-size <n>      SVG 模块像素大小 / SVG module size in pixels (default 4)\n  -f, --format <name>        ascii | half | svg | json (default: by output extension)\n      --json                 JSON 元数据与模块矩阵 / JSON metadata and module rows\n  -o, --output <path>        输出到文件 / write to a file instead of stdout\n      --svg                  格式快捷方式 / shorthand for --format svg\n      --half                 格式快捷方式 / shorthand for --format half\n      --dark <css-color>     SVG 前景色 / SVG foreground color (default #000000)\n      --light <css-color>    SVG 背景色 / SVG background color (default #ffffff)\n  -h, --help                 显示帮助 / show this help\n  -V, --cli-version          显示版本 / show the CLI version\n\n将载荷写成 - 时从标准输入读取，末尾换行会被去除。\nUse - as the payload to read from stdin; trailing newlines are stripped.\n使用 -- 可编码以 - 开头的载荷。\nUse -- before a payload that starts with -.\n\n示例 / EXAMPLES:\n  moonqr \"HELLO WORLD\" -l H -o hello.svg\n  moonqr \"https://moonbitlang.com\" --format half\n  moonqr \"你好世界\" -l M -o hello.svg\n  moonqr \"0123456789\" -v 2 -m numeric -s 2\n  echo -n \"HELLO\" | moonqr - -l H --svg\n  cat payload.txt | moonqr - -o code.svg\n  moonqr --json \"HELLO\" | jq .version\n  moonqr -- --payload-starting-with-dash",
+    "moonqr - MoonBit QR Code 生成器 / QR Code Generator\n\n用法 / USAGE:\n  moonqr <载荷/payload> [选项/options]\n  moonqr - [选项/options] < 文件\n  moonqr [选项/options] -- <载荷/payload>\n\n选项 / OPTIONS:\n  -l, --level <L|M|Q|H>      纠错等级 / error correction level (default M)\n  -v, --version <1..40>      指定版本 / force an explicit version\n      --min-version <n>      最小候选版本 / smallest version considered\n      --max-version <n>      最大候选版本 / largest version considered\n  -m, --mode <name>          numeric | alphanumeric | byte (default auto)\n      --mask <0..7>          指定掩码 / force a mask pattern\n  -q, -qz, --quiet-zone <n>  静默区宽度 / quiet zone width in modules (default 4)\n  -s, --scale <n>            ASCII 缩放倍数 / ASCII scale factor (default 1)\n      --module-size <n>      SVG / PNG 模块像素大小 / SVG & PNG module size in pixels (default 4)\n      --radius <n>           SVG 圆角半径（模块单位）/ rounded SVG radius in modules (default 1)\n  -f, --format <name>        ascii | half | color | svg | svg-rect | svg-rounded | png | png-rgba | pbm | json\n                             （默认按 --output 扩展名推断 / default inferred from output extension）\n      --json                 JSON 元数据与模块矩阵 / JSON metadata and module rows\n      --svg                  格式快捷方式 / shorthand for --format svg\n      --svg-rect             格式快捷方式 / shorthand for --format svg-rect\n      --svg-rounded          格式快捷方式 / shorthand for --format svg-rounded\n      --color                格式快捷方式 / shorthand for --format color (ANSI 真彩色)\n      --png                  格式快捷方式 / shorthand for --format png (灰度 PNG)\n      --png-rgba             格式快捷方式 / shorthand for --format png-rgba\n      --pbm                  格式快捷方式 / shorthand for --format pbm\n      --half                 格式快捷方式 / shorthand for --format half\n  -o, --output <path>        输出到文件 / write to a file instead of stdout\n                             png / png-rgba / pbm 必须指定 --output，不能打到 stdout\n                             png / png-rgba / pbm require --output; they cannot go to stdout\n      --dark <css-color>     前景色 / foreground color (default #000000)\n      --light <css-color>    背景色 / background color (default #ffffff)\n  -h, --help                 显示帮助 / show this help\n  -V, --cli-version          显示版本 / show the CLI version\n\n将载荷写成 - 时从标准输入读取，末尾换行会被去除。\nUse - as the payload to read from stdin; trailing newlines are stripped.\n使用 -- 可编码以 - 开头的载荷。\nUse -- before a payload that starts with -.\n\n示例 / EXAMPLES:\n  moonqr \"HELLO WORLD\" -l H -o hello.svg\n  moonqr \"https://moonbitlang.com\" --format half\n  moonqr \"你好世界\" -l M --color\n  moonqr \"0123456789\" -v 2 -m numeric -s 2\n  moonqr \"HELLO\" -o hello.png\n  moonqr \"HELLO\" --png-rgba --dark \"#ff0000\" --light \"#00ff00\" -o hello.png\n  moonqr \"HELLO\" --svg-rounded --radius 1 -o hello.svg\n  moonqr \"HELLO\" -o hello.pbm\n  echo -n \"HELLO\" | moonqr - -l H --svg\n  cat payload.txt | moonqr - -o code.svg\n  moonqr --json \"HELLO\" | jq .version\n  moonqr -- --payload-starting-with-dash",
   )
 }
 
@@ -124,6 +125,7 @@ fn parse_args(argv : Array[String]) -> Options raise CliError {
   let mut quiet_zone = 4
   let mut scale = 1
   let mut module_size = 4
+  let mut radius = 1
   let mut format = "auto"
   let mut output : String? = None
   let mut dark = "#000000"
@@ -164,8 +166,32 @@ fn parse_args(argv : Array[String]) -> Options raise CliError {
         format = "svg"
         i = i + 1
       }
+      "--svg-rect" => {
+        format = "svg-rect"
+        i = i + 1
+      }
+      "--svg-rounded" => {
+        format = "svg-rounded"
+        i = i + 1
+      }
       "--half" => {
         format = "half"
+        i = i + 1
+      }
+      "--color" => {
+        format = "color"
+        i = i + 1
+      }
+      "--png" => {
+        format = "png"
+        i = i + 1
+      }
+      "--png-rgba" => {
+        format = "png-rgba"
+        i = i + 1
+      }
+      "--pbm" => {
+        format = "pbm"
         i = i + 1
       }
       "-l" | "--level" => {
@@ -215,13 +241,27 @@ fn parse_args(argv : Array[String]) -> Options raise CliError {
         module_size = parse_int(value, arg)
         i = next
       }
+      "--radius" => {
+        let (value, next) = take_value(argv, i, arg)
+        radius = parse_int(value, arg)
+        i = next
+      }
       "-f" | "--format" => {
         let (value, next) = take_value(argv, i, arg)
         match value {
-          "ascii" | "half" | "svg" | "json" => format = value
+          "ascii"
+          | "half"
+          | "color"
+          | "svg"
+          | "svg-rect"
+          | "svg-rounded"
+          | "png"
+          | "png-rgba"
+          | "pbm"
+          | "json" => format = value
           _ =>
             raise CliError::Usage(
-              "invalid format '\{value}'; expected ascii, half, svg or json",
+              "invalid format '\{value}'; expected ascii, half, color, svg, svg-rect, svg-rounded, png, png-rgba, pbm or json",
             )
         }
         i = next
@@ -267,6 +307,26 @@ fn parse_args(argv : Array[String]) -> Options raise CliError {
   if module_size < 1 {
     raise CliError::Usage("module size must be at least 1")
   }
+  if radius < 0 {
+    raise CliError::Usage("radius must be non-negative")
+  }
+  let resolved_format = if format == "auto" {
+    match output {
+      Some(path) => infer_format(path)
+      None => "ascii"
+    }
+  } else {
+    format
+  }
+  // 二进制格式必须指定 --output
+  let is_binary = resolved_format == "png" ||
+    resolved_format == "png-rgba" ||
+    resolved_format == "pbm"
+  if is_binary && output is None {
+    raise CliError::Usage(
+      "format '\{resolved_format}' is binary and requires --output",
+    )
+  }
   {
     payload,
     ec_level,
@@ -277,7 +337,8 @@ fn parse_args(argv : Array[String]) -> Options raise CliError {
     quiet_zone,
     scale,
     module_size,
-    format,
+    radius,
+    format: resolved_format,
     output,
     dark,
     light,
@@ -303,22 +364,20 @@ fn encode_qr(options : Options) -> @lib.QrCode {
 }
 
 ///|
-fn inferred_format(options : Options) -> String {
-  if options.format != "auto" {
-    return options.format
-  }
-  match options.output {
-    Some(path) => {
-      let lower = path.to_lower()
-      if lower.has_suffix(".txt") {
-        "ascii"
-      } else if lower.has_suffix(".json") {
-        "json"
-      } else {
-        "svg"
-      }
-    }
-    None => "ascii"
+fn infer_format(path : String) -> String {
+  let lower = path.to_lower()
+  if lower.has_suffix(".svg") {
+    "svg"
+  } else if lower.has_suffix(".json") {
+    "json"
+  } else if lower.has_suffix(".png") {
+    "png"
+  } else if lower.has_suffix(".pbm") {
+    "pbm"
+  } else if lower.has_suffix(".txt") {
+    "ascii"
+  } else {
+    "svg"
   }
 }
 
@@ -360,32 +419,139 @@ fn render_json(qr : @lib.QrCode) -> String {
 }
 
 ///|
-fn render(qr : @lib.QrCode, options : Options) -> String {
-  let format = inferred_format(options)
+/// 渲染输出可以是文本（String）或二进制（Array[Byte]）。
+/// 二进制输出必须指定 --output，不能打到 stdout。
+///
+/// Rendered output is either text (String) or binary (Array[Byte]).
+/// Binary output must write to a file; it cannot go to stdout.
+enum Rendered {
+  Text(String)
+  Bytes(Array[Byte])
+}
+
+///|
+fn render(qr : @lib.QrCode, options : Options) -> Rendered {
+  let format = options.format
   match format {
-    "json" => render_json(qr)
+    "json" => Rendered::Text(render_json(qr))
     "svg" =>
-      try
-        @lib.to_svg(
+      Rendered::Text(
+        try
+          @lib.to_svg(
+            qr,
+            quiet_zone=options.quiet_zone,
+            module_size=options.module_size,
+            dark=options.dark,
+            light=options.light,
+          )
+        catch {
+          e => die(e.message())
+        } noraise {
+          text => text
+        },
+      )
+    "svg-rect" =>
+      Rendered::Text(
+        try
+          @lib.to_svg_rect(
+            qr,
+            quiet_zone=options.quiet_zone,
+            module_size=options.module_size,
+            dark=options.dark,
+            light=options.light,
+          )
+        catch {
+          e => die(e.message())
+        } noraise {
+          text => text
+        },
+      )
+    "svg-rounded" =>
+      Rendered::Text(
+        try
+          @lib.to_svg_rounded(
+            qr,
+            quiet_zone=options.quiet_zone,
+            module_size=options.module_size,
+            dark=options.dark,
+            light=options.light,
+            radius=options.radius,
+          )
+        catch {
+          e => die(e.message())
+        } noraise {
+          text => text
+        },
+      )
+    "color" =>
+      Rendered::Text(
+        try
+          @lib.to_ascii_color(
+            qr,
+            quiet_zone=options.quiet_zone,
+            scale=options.scale,
+            dark=options.dark,
+            light=options.light,
+          )
+        catch {
+          e => die(e.message())
+        } noraise {
+          text => text
+        },
+      )
+    "png" =>
+      Rendered::Bytes(
+        @lib.to_png(
           qr,
           quiet_zone=options.quiet_zone,
           module_size=options.module_size,
-          dark=options.dark,
-          light=options.light,
-        )
-      catch {
-        e => die(e.message())
-      } noraise {
-        text => text
-      }
-    "half" => @lib.to_ascii_half(qr, quiet_zone=options.quiet_zone)
-    _ => @lib.to_ascii(qr, quiet_zone=options.quiet_zone, scale=options.scale)
+        ),
+      )
+    "png-rgba" =>
+      Rendered::Bytes(
+        try
+          @lib.to_png_rgba(
+            qr,
+            quiet_zone=options.quiet_zone,
+            module_size=options.module_size,
+            dark=options.dark,
+            light=options.light,
+          )
+        catch {
+          e => die(e.message())
+        } noraise {
+          bytes => bytes
+        },
+      )
+    "pbm" =>
+      Rendered::Bytes(
+        @lib.to_pbm(
+          qr,
+          quiet_zone=options.quiet_zone,
+          module_size=options.module_size,
+        ),
+      )
+    "half" =>
+      Rendered::Text(@lib.to_ascii_half(qr, quiet_zone=options.quiet_zone))
+    _ =>
+      Rendered::Text(
+        @lib.to_ascii(qr, quiet_zone=options.quiet_zone, scale=options.scale),
+      )
   }
 }
 
 ///|
-fn write_output(path : String, text : String) -> Unit {
+fn write_text_output(path : String, text : String) -> Unit {
   try @fs.write_string_to_file(path, text) catch {
+    _ => die("failed to write output file '\{path}'")
+  } noraise {
+    _ => ()
+  }
+}
+
+///|
+fn write_bytes_output(path : String, data : Array[Byte]) -> Unit {
+  try @fs.write_bytes_to_file(path, Bytes::from_array(data)) catch {
     _ => die("failed to write output file '\{path}'")
   } noraise {
     _ => ()
@@ -401,9 +567,17 @@ fn main {
     options => options
   }
   let qr = encode_qr(options)
-  let text = render(qr, options)
-  match options.output {
-    Some(path) => write_output(path, text)
-    None => println(text.trim(chars="\n"))
+  let rendered = render(qr, options)
+  match rendered {
+    Rendered::Text(text) =>
+      match options.output {
+        Some(path) => write_text_output(path, text)
+        None => println(text.trim(chars="\n"))
+      }
+    Rendered::Bytes(data) =>
+      match options.output {
+        Some(path) => write_bytes_output(path, data)
+        None => die("binary output requires --output")
+      }
   }
 }

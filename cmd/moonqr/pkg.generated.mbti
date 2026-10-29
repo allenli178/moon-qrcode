@@ -9,6 +9,8 @@ type CliError
 // Types and methods
 type Options
 
+type Rendered
+
 // Type aliases
 
 // Traits
